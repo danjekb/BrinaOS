@@ -43,6 +43,10 @@ on:
         description: 'Patch brina.sh to delete ROMs/caches as it goes (needed on a free runner)'
         type: boolean
         default: true
+      enable_32bit:
+        description: 'Enable 32-bit zygote and inject 32-bit compatibility libs'
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -197,7 +201,8 @@ jobs:
           [[ "${{ inputs.brina }}" == "true" ]] && args="--Brina"
           if [[ -n "${{ inputs.kernel_url }}" ]]; then args="$args --kernel ${{ inputs.kernel_url }}"; fi
           export CI_FREE_SPACE="${{ inputs.clean_disk }}"
-          echo "brina.sh $args <base> <port>  [CI_FREE_SPACE=${CI_FREE_SPACE}]"
+          export PORT_ENABLE_32BIT="${{ inputs.enable_32bit }}"
+          echo "brina.sh $args <base> <port>  [CI_FREE_SPACE=${CI_FREE_SPACE}, PORT_ENABLE_32BIT=${PORT_ENABLE_32BIT}]"
           bash ./brina.sh $args "${{ inputs.base_url }}" "${{ inputs.port_url }}"
 
       - name: What came out
