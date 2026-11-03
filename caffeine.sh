@@ -708,6 +708,8 @@ add_prop_v2(){
     value=$2
     bruce_prop="build/portrom/images/my_product/etc/bruce/build.prop"
     portrom_prop="build/portrom/images/my_product/build.prop"
+    mkdir -p "$(dirname "$bruce_prop")"
+    touch "$bruce_prop" 2>/dev/null || true
 
     # If neither file has this prop, add to bruce_prop
     if ! grep -q "^${prop}=" "$bruce_prop" && ! grep -q "^${prop}=" "$portrom_prop"; then
@@ -823,6 +825,8 @@ add_prop_from_port() {
             blue "Force update: $key=$value"
         fi
     done
+    mkdir -p "$(dirname "$bruce_prop")"
+    touch "$bruce_prop" 2>/dev/null || true
 
     # Append to final file
     cat "$temp_file" >> "$bruce_prop"
@@ -1035,10 +1039,10 @@ add_module() {
     unset module_required_android_version module_requires_experimental
     source $1
     if [[ $port_android_version -ge $module_required_android_version ]]; then
-        continue
+        return
     fi
     if [[ $module_requires_experimental -eq $experimental ]]; then
-        continue
+        return
     fi
     blue "Module: ${module_display_name}"
 

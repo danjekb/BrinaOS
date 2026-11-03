@@ -3348,7 +3348,7 @@ else
     sed -i "s/andVersion/${port_android_version}/g" out/${os_type}_${rom_version}/META-INF/com/google/android/update-binary
     sed -i "s/PROJECT_CODE/${base_device_code}/g" out/${os_type}_${rom_version}/META-INF/com/google/android/update-binary
 
-    unix2dos out/${os_type}_${rom_version}/windows_flash_script.bat
+    sed -i 's/$//' out/${os_type}_${rom_version}/windows_flash_script.bat
 
     # disable vbmeta
     for img in $(find out/${os_type}_${rom_version}/ -type f -name "vbmeta*.img");do
