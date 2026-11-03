@@ -576,6 +576,17 @@ PORT_SELINUX_PERMISSIVE=${PORT_SELINUX_PERMISSIVE:-true}
 # 32-bit runtime so the vendor's request can actually be served.
 if [[ "$PORT_ENABLE_32BIT" == "true" && ! -f build/portrom/images/system/system/bin/app_process32 && -n "$vendor_cpu_abilist32" ]]; then
     blue "64bit only portrom detected"
+    # Download 32bit-compatibility.zip from GitHub release if missing locally
+    if [[ ! -f devices/common/32bit-compatibility.zip ]]; then
+        blue "32bit-compatibility.zip not found locally, downloading from GitHub release"
+        mkdir -p devices/common
+        if curl -Lfs -o devices/common/32bit-compatibility.zip \
+            "https://github.com/danjekb/BrinaOS/releases/download/32bit-compatibility/32bit-compatibility.zip"; then
+            green "Downloaded 32bit-compatibility.zip from GitHub release"
+        else
+            yellow "Failed to download 32bit-compatibility.zip from GitHub release"
+        fi
+    fi
     if [[ -f devices/common/32bit-compatibility.zip ]];then
         unzip -o devices/common/32bit-compatibility.zip -d build/portrom/images/ > /dev/null || error "Failed to extract 32bit-compatibility.zip"
         # the zip ships the compressed ART apex; leaving an uncompressed one
