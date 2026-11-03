@@ -47,6 +47,10 @@ on:
         description: 'Enable 32-bit zygote and inject 32-bit compatibility libs'
         type: boolean
         default: false
+      enable_32bit_zygote:
+        description: 'Declare 32-bit ABI support in build.prop (requires enable_32bit)'
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -202,7 +206,8 @@ jobs:
           if [[ -n "${{ inputs.kernel_url }}" ]]; then args="$args --kernel ${{ inputs.kernel_url }}"; fi
           export CI_FREE_SPACE="${{ inputs.clean_disk }}"
           export PORT_ENABLE_32BIT="${{ inputs.enable_32bit }}"
-          echo "brina.sh $args <base> <port>  [CI_FREE_SPACE=${CI_FREE_SPACE}, PORT_ENABLE_32BIT=${PORT_ENABLE_32BIT}]"
+          export PORT_ENABLE_32BIT_ZYGOTE="${{ inputs.enable_32bit_zygote }}"
+          echo "brina.sh $args <base> <port>  [CI_FREE_SPACE=${CI_FREE_SPACE}, PORT_ENABLE_32BIT=${PORT_ENABLE_32BIT}, PORT_ENABLE_32BIT_ZYGOTE=${PORT_ENABLE_32BIT_ZYGOTE}]"
           bash ./brina.sh $args "${{ inputs.base_url }}" "${{ inputs.port_url }}"
 
       - name: What came out

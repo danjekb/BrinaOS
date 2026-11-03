@@ -574,8 +574,8 @@ PORT_SELINUX_PERMISSIVE=${PORT_SELINUX_PERMISSIVE:-true}
 # so init's "import init.${ro.zygote}.rc" resolves to nothing, no zygote is ever
 # defined, and the device hangs forever on the boot animation. Restore the
 # 32-bit runtime so the vendor's request can actually be served.
-if [[ "$PORT_ENABLE_32BIT" == "true" && ! -f build/portrom/images/system/system/bin/app_process32 && -n "$vendor_cpu_abilist32" ]]; then
-    blue "64bit only portrom detected"
+if [[ "$PORT_ENABLE_32BIT" == "true" && ! -f build/portrom/images/system/system/bin/app_process32 ]]; then
+    blue "64bit only portrom detected — enabling 32-bit runtime injection"
     # Download 32bit-compatibility.zip from GitHub release if missing locally
     if [[ ! -f devices/common/32bit-compatibility.zip ]]; then
         blue "32bit-compatibility.zip not found locally, downloading from GitHub release"
@@ -625,6 +625,16 @@ if [[ "$PORT_ENABLE_32BIT" == "true" && ! -f build/portrom/images/system/system/
         # list while a 32-bit zygote is live. Mirror what the vendor declares -
         # the same values a natively 64_32 baserom carries in system/build.prop.
         vendor_cpu_abilist=$(< build/portrom/images/vendor/build.prop grep "^ro.vendor.product.cpu.abilist=" |awk 'NR==1' |cut -d '=' -f 2 |tr -d '\r')
+        vendor_cpu_abilist32=$(< build/portrom/images/vendor/build.prop grep "^ro.vendor.product.cpu.abilist32=" |awk 'NR==1' |cut -d '=' -f 2 |tr -d '\r')
+        # If the port ROM ships an empty 32-bit ABI list (common on 64-bit-only ROMs),
+        # fall back to the base ROM's values so the injected 32-bit runtime is actually
+        # advertised to PackageManager.
+        if [[ -z "$vendor_cpu_abilist32" && -f build/baserom/images/vendor/build.prop ]]; then
+            vendor_cpu_abilist32=$(< build/baserom/images/vendor/build.prop grep "^ro.vendor.product.cpu.abilist32=" |awk 'NR==1' |cut -d '=' -f 2 |tr -d '\r')
+        fi
+        if [[ -z "$vendor_cpu_abilist" && -f build/baserom/images/vendor/build.prop ]]; then
+            vendor_cpu_abilist=$(< build/baserom/images/vendor/build.prop grep "^ro.vendor.product.cpu.abilist=" |awk 'NR==1' |cut -d '=' -f 2 |tr -d '\r')
+        fi
         system_build_prop="build/portrom/images/system/system/build.prop"
         # Only advertise a 32-bit ABI when a 32-bit zygote is actually running.
         # Declaring it with the zygote off makes PackageManager resolve apps to an
