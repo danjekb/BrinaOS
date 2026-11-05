@@ -907,55 +907,6 @@ else
         echo "⚠️ 0001-core-framework-Introduce-OplusPropsHookUtils-V6.patch does not exist, skipping patch application"
     fi
 fi
-# Kaorios Toolbox. Vendored under devices/common/prebuilt/KaoriosToolbox (V2.0.4)
-# rather than fetched at build time: the old block pulled V1.0.9 and ran its
-# Toolbox-patcher/scripts/patcher.sh, a host script the project deleted when it
-# moved framework patching into the on-device KaoriosPatcher app. It was also
-# gated to OOS only, so it never ran on a ColorOS port.
-#
-# The framework attestation hook is left to the app's own on-device patcher: it
-# finds the injection points live and re-dexopts locally, so there is no stale
-# boot image and no permanent perf/battery cost. This block just makes the app,
-# its permissions and its enablement props present on first boot; the hook dex is
-# staged beside the app for the patcher to pick up.
-if [[ ${portIsOOS} == true || ${portIsColorOSGlobal} == true ]];then
-    KAORIOS_SRC=devices/common/prebuilt/KaoriosToolbox
-    if [[ -d ${KAORIOS_SRC} ]];then
-        blue "Implement Kaorios Toolbox ($(cut -d= -f2 ${KAORIOS_SRC}/VERSION | head -n1))"
-        KAORIOS_APPDIR=build/portrom/images/system_ext/priv-app/KaoriosToolbox
-        mkdir -p ${KAORIOS_APPDIR}/lib
-        cp -f ${KAORIOS_SRC}/app/KaoriosToolbox.apk ${KAORIOS_APPDIR}/
-        cp -rf ${KAORIOS_SRC}/app/lib/* ${KAORIOS_APPDIR}/lib/
-        cp -f ${KAORIOS_SRC}/kaorios_hook.dex ${KAORIOS_APPDIR}/kaorios_hook.dex
-        cp -f ${KAORIOS_SRC}/privapp_whitelist_com.kousei.kaorios.xml \
-              build/portrom/images/system_ext/etc/permissions/
-        find ${KAORIOS_APPDIR} -type d -exec chmod 755 {} \;
-        find ${KAORIOS_APPDIR} -type f -exec chmod 644 {} \;
-        chmod 644 build/portrom/images/system_ext/etc/permissions/privapp_whitelist_com.kousei.kaorios.xml
-
-        # persist.sys.kaorios enables the app; ro.control_privapp_permissions=
-        # (empty) stops a strict priv-app permission check from killing it on
-        # first boot. Neither is a spoof - the app owns its own spoofing.
-        add_prop_v2 "persist.sys.kaorios" "kousei"
-        if ! grep -q "^ro.control_privapp_permissions=" build/portrom/images/system/system/build.prop;then
-            echo "ro.control_privapp_permissions=" >> build/portrom/images/system/system/build.prop
-        fi
-
-        # Patch framework.jar and services.jar with the Kaorios driver hooks.
-        # This is what makes the app recognise the framework on first boot —
-        # without it, the app shows "framework not found" and the on-device
-        # patcher has nothing to hook into.
-        if [[ -f devices/common/prebuilt/KaoriosToolbox/patch_framework.sh ]];then
-            bash devices/common/prebuilt/KaoriosToolbox/patch_framework.sh || {
-                yellow "Kaorios framework patching failed — the app will show 'framework not found'"
-                yellow "You can still run the on-device patcher manually after first boot"
-            }
-        fi
-    else
-        yellow "Kaorios Toolbox: ${KAORIOS_SRC} not found, skipping"
-    fi
-fi
-
 targetOplusService=$(find build/portrom/images/ -name "oplus-services.jar")
 if [[ -f build/${app_patch_folder}/patched/oplus-services.jar ]];then
     blue "Copying already processed oplus-services.jar"
